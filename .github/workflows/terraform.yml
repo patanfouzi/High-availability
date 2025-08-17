@@ -1,0 +1,72 @@
+name: Terraform GCP Automation
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  terraform:
+    name: Terraform on GCP
+    runs-on: ubuntu-latest
+
+    env:
+      TERRAFORM_DIR: ${{ github.workspace }}/terraform
+
+    steps:
+      # Step 1: Checkout repository
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      # Step 2: Setup Terraform
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v2
+        with:
+          terraform_version: 1.6.0
+
+      # Step 3: Authenticate with GCP
+      - name: Authenticate to GCP
+        uses: google-github-actions/auth@v1
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+      # Step 4: Verify GCP authentication
+      - name: GCP Auth Test
+        run: gcloud auth list
+
+      # Step 5: Check Terraform setup
+      - name: Check Terraform
+        run: |
+          echo "🔍 Checking Terraform setup..."
+          terraform -version
+          ls -l $TERRAFORM_DIR
+
+      # Step 6: Terraform Init
+      - name: Terraform Init
+        working-directory: ${{ env.TERRAFORM_DIR }}
+        run: terraform init
+
+      # Step 7: Terraform Plan
+      - name: Terraform Plan
+        working-directory: ${{ env.TERRAFORM_DIR }}
+        run: terraform plan -out=tfplan
+
+      # Step 8: Terraform Apply
+      - name: Terraform Apply
+        working-directory: ${{ env.TERRAFORM_DIR }}
+        run: terraform apply -auto-approve tfplan
+
+      # Optional: Terraform Destroy (use with caution)
+      - name: Terraform Destroy
+        working-directory: ${{ env.TERRAFORM_DIR }}
+        run: terraform destroy -auto-approve
+
+      # Success / Failure messages
+      - name: Success Message
+        if: success()
+        run: echo "✅ Terraform workflow completed successfully!"
+
+      - name: Failure Message
+        if: failure()
+        run: echo "❌ Terraform workflow failed. Check logs above!"
