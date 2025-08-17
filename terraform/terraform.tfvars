@@ -1,0 +1,5 @@
+project = "crypto-lodge-466511-s8"
+region  = "us-central1"
+zone    = "us-central1-c"
+vm_name = "vm1-monitoring"
+machine_type = "e2-medium"
