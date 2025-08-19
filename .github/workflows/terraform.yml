@@ -1,9 +1,6 @@
 name: Terraform GCP Automation
 
 on:
-  push:
-    branches:
-      - main
   workflow_dispatch:
 
 jobs:
@@ -59,7 +56,7 @@ jobs:
 
       # Optional: Terraform Destroy (use with caution)
      # - name: Terraform Destroy
-      #  working-directory: ${{ env.TERRAFORM_DIR }}
+     #   working-directory: ${{ env.TERRAFORM_DIR }}
      #   run: terraform destroy -auto-approve
 
       # Success / Failure messages
