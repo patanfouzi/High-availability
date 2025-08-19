@@ -40,12 +40,19 @@ resource "google_compute_instance_template" "vm1_template" {
   tags = ["http-server"]
 }
 
-# Health check
-resource "google_compute_health_check" "http_health_check" {
-  name    = "${var.vm_name}-health-check"
-  project = var.project
+# ✅ Regional Health Check (fixed)
+resource "google_compute_region_health_check" "http_health_check" {
+  name                = "${var.vm_name}-health-check"
+  project             = var.project
+  region              = var.region
+  check_interval_sec  = 10
+  timeout_sec         = 5
+  healthy_threshold   = 2
+  unhealthy_threshold = 2
+
   http_health_check {
-    port = 80
+    port         = 80
+    request_path = "/"
   }
 }
 
@@ -65,7 +72,7 @@ resource "google_compute_region_instance_group_manager" "mig" {
   distribution_policy_zones = var.zones
 
   auto_healing_policies {
-    health_check      = google_compute_health_check.http_health_check.self_link
+    health_check      = google_compute_region_health_check.http_health_check.self_link
     initial_delay_sec = 300
   }
 }
@@ -87,17 +94,22 @@ resource "google_compute_region_autoscaler" "autoscaler" {
   }
 }
 
-# Backend service
+# ✅ Backend service with depends_on
 resource "google_compute_backend_service" "backend_service" {
-  name          = "${var.vm_name}-backend-service"
-  project       = var.project
-  protocol      = "HTTP"
-  timeout_sec   = 10
-  health_checks = [google_compute_health_check.http_health_check.self_link]
+  name                  = "${var.vm_name}-backend-service"
+  project               = var.project
+  protocol              = "HTTP"
+  timeout_sec           = 10
+  load_balancing_scheme = "EXTERNAL_MANAGED"
+  health_checks         = [google_compute_region_health_check.http_health_check.self_link]
 
   backend {
     group = google_compute_region_instance_group_manager.mig.instance_group
   }
+
+  depends_on = [
+    google_compute_region_health_check.http_health_check
+  ]
 }
 
 # URL Map
