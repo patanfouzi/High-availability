@@ -9,8 +9,14 @@ variable "region" {
 }
 
 variable "zone" {
-  description = "GCP zone"
+  description = "Default zone (used for snapshot creation)"
   type        = string
+}
+
+variable "zones" {
+  description = "List of zones inside the region for Regional MIG"
+  type        = list(string)
+  default     = ["us-central1-b", "us-central1-c"]
 }
 
 variable "vm_name" {
@@ -38,7 +44,7 @@ variable "max_replicas" {
 }
 
 variable "cpu_utilization_target" {
- description = "CPU utilization target for autoscaling"
+  description = "CPU utilization target for autoscaling"
   type        = number
   default     = 0.8
 }
