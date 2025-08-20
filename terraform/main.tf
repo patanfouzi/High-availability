@@ -41,7 +41,7 @@ resource "google_compute_instance_template" "vm1_template" {
 }
 
 # ✅ Regional Health Check (fixed)
-resource "google_compute_region_health_check" "http_health_check" {
+resource "google_compute_health_check" "http_health_check" {
   name                = "${var.vm_name}-health-check"
   project             = var.project
   region              = var.region
@@ -72,7 +72,7 @@ resource "google_compute_region_instance_group_manager" "mig" {
   distribution_policy_zones = var.zones
 
   auto_healing_policies {
-    health_check      = google_compute_region_health_check.http_health_check.self_link
+    health_check      = google_compute_health_check.http_health_check.self_link
     initial_delay_sec = 300
   }
 }
@@ -101,7 +101,7 @@ resource "google_compute_backend_service" "backend_service" {
   protocol              = "HTTP"
   timeout_sec           = 10
   load_balancing_scheme = "EXTERNAL_MANAGED"
-  health_checks         = [google_compute_region_health_check.http_health_check.self_link]
+  health_checks         = [google_compute_health_check.http_health_check.self_link]
 
   backend {
     group = google_compute_region_instance_group_manager.mig.instance_group
